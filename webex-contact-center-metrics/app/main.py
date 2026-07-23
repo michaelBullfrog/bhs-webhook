@@ -33,7 +33,11 @@ app.add_middleware(
         "https://michaelbullfrog.github.io",
     ],
     allow_credentials=False,
-    allow_methods=["GET"],
+    allow_methods=[
+        "GET",
+        "POST",
+        "OPTIONS",
+    ],
     allow_headers=["*"],
 )
 
@@ -51,7 +55,9 @@ async def root() -> dict[str, str]:
 
 @app.get("/health")
 async def health() -> dict[str, str]:
-    return {"status": "healthy"}
+    return {
+        "status": "healthy",
+    }
 
 
 @app.on_event("startup")
@@ -61,4 +67,5 @@ async def startup_event() -> None:
         settings.app_name,
         settings.environment,
     )
+
     initialize_database()
