@@ -439,79 +439,171 @@ def save_webhook_event(
                     or ("logged-out" if event_type == "agent:logout" else None)
                 )
 
-                cursor.execute(
-                    """
-                    INSERT INTO current_agent_states (
-                        agent_id,
-                        channel_type,
-                        agent_ci_user_id,
-                        task_id,
-                        queue_id,
-                        team_id,
-                        channel_id,
-                        current_state,
-                        idle_code_id,
-                        idle_code_name,
-                        wrapup_code_id,
-                        wrapup_code_name,
-                        origin_value,
-                        destination_value,
-                        state_started_at,
-                        source_created_time_ms,
-                        last_event_id,
-                        updated_at
+                if event_type == "agent:logout":
+                    cursor.execute(
+                        """
+                        UPDATE current_agent_states
+                        SET
+                            current_state = 'logged-out',
+                            task_id = NULL,
+                            queue_id = NULL,
+                            channel_id = NULL,
+                            idle_code_id = NULL,
+                            idle_code_name = NULL,
+                            wrapup_code_id = NULL,
+                            wrapup_code_name = NULL,
+                            origin_value = NULL,
+                            destination_value = NULL,
+                            state_started_at = CASE
+                                WHEN %(created_time_ms)s IS NULL
+                                    THEN %(received_at)s
+                                ELSE TO_TIMESTAMP(
+                                    %(created_time_ms)s / 1000.0
+                                )
+                            END,
+                            source_created_time_ms = %(created_time_ms)s,
+                            last_event_id = %(event_id)s,
+                            updated_at = NOW()
+                        WHERE agent_id = %(agent_id)s
+                           OR (
+                                %(agent_ci_user_id)s IS NOT NULL
+                                AND agent_ci_user_id = %(agent_ci_user_id)s
+                           )
+                        """,
+                        parameters,
                     )
-                    VALUES (
-                        %(agent_id)s,
-                        %(channel_type)s,
-                        %(agent_ci_user_id)s,
-                        %(task_id)s,
-                        %(queue_id)s,
-                        %(team_id)s,
-                        %(channel_id)s,
-                        %(current_state_upsert)s,
-                        %(idle_code_id)s,
-                        %(idle_code_name)s,
-                        %(wrapup_code_id)s,
-                        %(wrapup_code_name)s,
-                        %(origin_value)s,
-                        %(destination_value)s,
-                        CASE
-                            WHEN %(created_time_ms)s IS NULL THEN %(received_at)s
-                            ELSE TO_TIMESTAMP(%(created_time_ms)s / 1000.0)
-                        END,
-                        %(created_time_ms)s,
-                        %(event_id)s,
-                        NOW()
+
+                    if cursor.rowcount == 0:
+                        cursor.execute(
+                            """
+                            INSERT INTO current_agent_states (
+                                agent_id,
+                                channel_type,
+                                agent_ci_user_id,
+                                team_id,
+                                current_state,
+                                state_started_at,
+                                source_created_time_ms,
+                                last_event_id,
+                                updated_at
+                            )
+                            VALUES (
+                                %(agent_id)s,
+                                'session',
+                                %(agent_ci_user_id)s,
+                                %(team_id)s,
+                                'logged-out',
+                                CASE
+                                    WHEN %(created_time_ms)s IS NULL
+                                        THEN %(received_at)s
+                                    ELSE TO_TIMESTAMP(
+                                        %(created_time_ms)s / 1000.0
+                                    )
+                                END,
+                                %(created_time_ms)s,
+                                %(event_id)s,
+                                NOW()
+                            )
+                            ON CONFLICT (agent_id, channel_type)
+                            DO UPDATE SET
+                                agent_ci_user_id = EXCLUDED.agent_ci_user_id,
+                                team_id = EXCLUDED.team_id,
+                                current_state = 'logged-out',
+                                task_id = NULL,
+                                queue_id = NULL,
+                                channel_id = NULL,
+                                idle_code_id = NULL,
+                                idle_code_name = NULL,
+                                wrapup_code_id = NULL,
+                                wrapup_code_name = NULL,
+                                origin_value = NULL,
+                                destination_value = NULL,
+                                state_started_at = EXCLUDED.state_started_at,
+                                source_created_time_ms =
+                                    EXCLUDED.source_created_time_ms,
+                                last_event_id = EXCLUDED.last_event_id,
+                                updated_at = NOW()
+                            """,
+                            parameters,
+                        )
+                else:
+                    cursor.execute(
+                        """
+                        INSERT INTO current_agent_states (
+                            agent_id,
+                            channel_type,
+                            agent_ci_user_id,
+                            task_id,
+                            queue_id,
+                            team_id,
+                            channel_id,
+                            current_state,
+                            idle_code_id,
+                            idle_code_name,
+                            wrapup_code_id,
+                            wrapup_code_name,
+                            origin_value,
+                            destination_value,
+                            state_started_at,
+                            source_created_time_ms,
+                            last_event_id,
+                            updated_at
+                        )
+                        VALUES (
+                            %(agent_id)s,
+                            %(channel_type)s,
+                            %(agent_ci_user_id)s,
+                            %(task_id)s,
+                            %(queue_id)s,
+                            %(team_id)s,
+                            %(channel_id)s,
+                            %(current_state_upsert)s,
+                            %(idle_code_id)s,
+                            %(idle_code_name)s,
+                            %(wrapup_code_id)s,
+                            %(wrapup_code_name)s,
+                            %(origin_value)s,
+                            %(destination_value)s,
+                            CASE
+                                WHEN %(created_time_ms)s IS NULL
+                                    THEN %(received_at)s
+                                ELSE TO_TIMESTAMP(
+                                    %(created_time_ms)s / 1000.0
+                                )
+                            END,
+                            %(created_time_ms)s,
+                            %(event_id)s,
+                            NOW()
+                        )
+                        ON CONFLICT (agent_id, channel_type)
+                        DO UPDATE SET
+                            agent_ci_user_id = EXCLUDED.agent_ci_user_id,
+                            task_id = EXCLUDED.task_id,
+                            queue_id = EXCLUDED.queue_id,
+                            team_id = EXCLUDED.team_id,
+                            channel_id = EXCLUDED.channel_id,
+                            current_state = EXCLUDED.current_state,
+                            idle_code_id = EXCLUDED.idle_code_id,
+                            idle_code_name = EXCLUDED.idle_code_name,
+                            wrapup_code_id = EXCLUDED.wrapup_code_id,
+                            wrapup_code_name = EXCLUDED.wrapup_code_name,
+                            origin_value = EXCLUDED.origin_value,
+                            destination_value = EXCLUDED.destination_value,
+                            state_started_at = EXCLUDED.state_started_at,
+                            source_created_time_ms =
+                                EXCLUDED.source_created_time_ms,
+                            last_event_id = EXCLUDED.last_event_id,
+                            updated_at = NOW()
+                        WHERE current_agent_states.source_created_time_ms IS NULL
+                           OR EXCLUDED.source_created_time_ms IS NULL
+                           OR EXCLUDED.source_created_time_ms
+                              >= current_agent_states.source_created_time_ms
+                        """,
+                        {
+                            **parameters,
+                            "current_state_upsert": current_state,
+                        },
                     )
-                    ON CONFLICT (agent_id, channel_type)
-                    DO UPDATE SET
-                        agent_ci_user_id = EXCLUDED.agent_ci_user_id,
-                        task_id = EXCLUDED.task_id,
-                        queue_id = EXCLUDED.queue_id,
-                        team_id = EXCLUDED.team_id,
-                        channel_id = EXCLUDED.channel_id,
-                        current_state = EXCLUDED.current_state,
-                        idle_code_id = EXCLUDED.idle_code_id,
-                        idle_code_name = EXCLUDED.idle_code_name,
-                        wrapup_code_id = EXCLUDED.wrapup_code_id,
-                        wrapup_code_name = EXCLUDED.wrapup_code_name,
-                        origin_value = EXCLUDED.origin_value,
-                        destination_value = EXCLUDED.destination_value,
-                        state_started_at = EXCLUDED.state_started_at,
-                        source_created_time_ms = EXCLUDED.source_created_time_ms,
-                        last_event_id = EXCLUDED.last_event_id,
-                        updated_at = NOW()
-                    WHERE current_agent_states.source_created_time_ms IS NULL
-                       OR EXCLUDED.source_created_time_ms IS NULL
-                       OR EXCLUDED.source_created_time_ms
-                          >= current_agent_states.source_created_time_ms
-                    """,
-                    {
-                        **parameters,
-                        "current_state_upsert": current_state,
-                    },
-                )
 
     return inserted
 
@@ -911,6 +1003,11 @@ def list_current_agent_states() -> list[dict[str, Any]]:
                     ON idle_lookup.auxiliary_code_id = c.idle_code_id
                 LEFT JOIN auxiliary_codes wrapup_lookup
                     ON wrapup_lookup.auxiliary_code_id = c.wrapup_code_id
+                WHERE LOWER(COALESCE(c.current_state, '')) NOT IN (
+                    'logged-out',
+                    'loggedout',
+                    'logout'
+                )
                 ORDER BY c.current_state, c.agent_id
                 """
             )
