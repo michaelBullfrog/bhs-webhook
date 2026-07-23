@@ -27,7 +27,7 @@ body{
 header{
   position:relative;
   min-height:132px;
-  padding:26px 5vw 26px 220px;
+  padding:26px 5vw 26px 230px;
   background:
     linear-gradient(110deg,rgba(0,159,227,.16),transparent 47%),
     var(--n);
@@ -45,13 +45,14 @@ header::before{
   left:38px;
   top:50%;
   transform:translateY(-50%);
-  width:150px;
-  height:62px;
-  background:
-    #fff
-    url("https://www.bhs-world.com/typo3conf/ext/c3local/Resources/Public/Icons/BHS_logo.svg")
-    center/132px auto
-    no-repeat;
+  width:160px;
+  height:82px;
+  background-color:#fff;
+  background-image:url("https://www.bhs-world.com/typo3conf/ext/c3local/Resources/Public/Icons/BHS_logo.svg");
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:contain;
+  border:12px solid #fff;
   border-radius:3px;
   box-shadow:0 7px 20px rgba(0,0,0,.18)
 }
@@ -284,7 +285,6 @@ button:hover{
   font-size:.84rem
 }
 
-/* Workforce bar layout */
 .barrow{
   display:grid;
   grid-template-columns:180px minmax(0,1fr) 36px;
@@ -456,55 +456,64 @@ footer{
   header{
     align-items:flex-start;
     flex-direction:column;
-    padding-left:190px
+    padding-left:205px
   }
 
   header::before{
     left:28px;
-    width:132px;
-    background-size:116px auto
+    width:145px;
+    height:76px;
+    background-size:contain;
+    border-width:10px
   }
 
   .right{text-align:left}
   .twocol,.fourgrid{grid-template-columns:1fr}
+
   .detailhead{
     align-items:stretch;
     flex-direction:column;
     gap:15px
   }
+
   .controls{grid-template-columns:1fr 1fr 95px}
-  .barrow{grid-template-columns:160px minmax(0,1fr) 36px}
+
+  .barrow{
+    grid-template-columns:160px minmax(0,1fr) 36px
+  }
 }
 
 @media(max-width:620px){
   header{
-    min-height:230px;
-    padding:105px 22px 24px
+    min-height:235px;
+    padding:112px 22px 24px
   }
 
   header::before{
-    top:24px;
+    top:20px;
     left:22px;
     transform:none;
-    width:125px;
-    height:56px;
-    background-size:110px auto
+    width:140px;
+    height:72px;
+    background-size:contain;
+    border-width:10px
   }
 
   .kpis{grid-template-columns:repeat(2,1fr)}
   .controls{grid-template-columns:1fr}
+
   .statusbar{
     align-items:stretch;
     flex-direction:column;
     gap:15px
   }
+
   .barrow{
     grid-template-columns:130px minmax(0,1fr) 32px;
     gap:8px
   }
 }
 
-/* Scoped fix: keep only the Team Health and Queue tables inside their cards. */
 .fourgrid .pad{
   overflow:hidden
 }
