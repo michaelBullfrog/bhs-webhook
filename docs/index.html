@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bullfrog Webex Live Operations</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <div>
+    <div class="eyebrow">BULLFROG GROUP</div>
+    <h1>Webex Contact Center Live Operations</h1>
+  </div>
+  <div class="status"><span id="dot"></span><span id="statusText">Connecting…</span></div>
+</header>
+
+<main>
+  <section class="toolbar card">
+    <input id="search" placeholder="Search agent, team, queue, state or reason">
+    <select id="stateFilter"><option value="">All states</option></select>
+    <select id="refreshSeconds">
+      <option value="3">3 seconds</option>
+      <option value="5" selected>5 seconds</option>
+      <option value="10">10 seconds</option>
+      <option value="30">30 seconds</option>
+    </select>
+    <button id="refreshButton">Refresh now</button>
+  </section>
+
+  <section id="summary" class="summary"></section>
+
+  <section class="card">
+    <div class="section-head">
+      <div>
+        <h2>Current agent states</h2>
+        <p id="updated">Waiting for first update…</p>
+      </div>
+      <span id="count">0 agents</span>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Agent</th>
+            <th>State</th>
+            <th>Reason / Wrap-up</th>
+            <th>Team</th>
+            <th>Queue</th>
+            <th>Time in state</th>
+            <th>Call</th>
+          </tr>
+        </thead>
+        <tbody id="rows">
+          <tr><td colspan="7" class="empty">Loading live agents…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
