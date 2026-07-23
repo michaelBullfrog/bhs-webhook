@@ -13,7 +13,11 @@ from .database import (
     list_recent_events,
     save_webhook_event,
 )
-from .webex_lookups import sync_all_lookups, sync_auxiliary_codes
+from .webex_lookups import (
+    sync_agent_states,
+    sync_all_lookups,
+    sync_auxiliary_codes,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +68,50 @@ async def get_current_agents() -> dict[str, Any]:
     return {
         "count": len(agents),
         "agents": agents,
+    }
+
+
+@router.post("/states/sync")
+async def manually_sync_agent_states(
+    minutes: int = Query(
+        default=60,
+        ge=5,
+        le=1440,
+        description=(
+            "Number of recent minutes to reconcile. "
+            "Maximum is 1440 minutes."
+        ),
+    ),
+) -> dict[str, Any]:
+    try:
+        result = await sync_agent_states(minutes=minutes)
+    except httpx.HTTPStatusError as exc:
+        logger.exception(
+            "Webex Agent Activities API returned an error"
+        )
+
+        try:
+            detail: Any = exc.response.json()
+        except ValueError:
+            detail = exc.response.text
+
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=detail,
+        ) from exc
+    except Exception as exc:
+        logger.exception(
+            "Could not manually synchronize agent states"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "synced": True,
+        "syncedAt": datetime.now(timezone.utc).isoformat(),
+        **result,
     }
 
 
