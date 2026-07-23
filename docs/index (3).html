@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BHS Executive Contact Center Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .controls{
+      grid-template-columns:125px minmax(240px,1fr) 150px 95px;
+    }
+
+    .syncstatus{
+      min-height:0;
+      padding:0 22px;
+      color:var(--m);
+      font-size:.8rem;
+      transition:.2s ease;
+    }
+
+    .syncstatus.active{
+      min-height:40px;
+      padding:11px 22px;
+      border-bottom:1px solid var(--b);
+      background:#f4f8fa;
+    }
+
+    #syncStates{
+      white-space:nowrap;
+    }
+
+    #syncStates:disabled{
+      opacity:.65;
+      cursor:wait;
+    }
+
+    @media(max-width:900px){
+      .controls{
+        grid-template-columns:125px 1fr 150px 95px;
+      }
+    }
+
+    @media(max-width:620px){
+      .controls{
+        grid-template-columns:1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <div class="eyebrow"></div>
+      <h1>Contact Center Overview</h1>
+    </div>
+
+    <div class="right">
+      <div>
+        <span id="dot"></span>
+        <span id="statusText">Connecting…</span>
+      </div>
+      <div id="clock" class="clock">--:--:--</div>
+    </div>
+  </header>
+
+  <main>
+    <section class="card statusbar">
+      <div>
+        <div class="label">Overall operational status</div>
+        <div class="statusline">
+          <span id="overall" class="badge neutral">Loading</span>
+          <span id="updated">Waiting for first update…</span>
+        </div>
+      </div>
+      <button id="refresh">Refresh now</button>
+    </section>
+
+    <section id="kpis" class="kpis"></section>
+
+    <section class="twocol">
+      <article class="card pad">
+        <div class="label">Executive summary</div>
+        <h2>What is happening right now</h2>
+        <p id="summary" class="summary">Collecting live data…</p>
+      </article>
+
+      <article class="card pad">
+        <div class="headrow">
+          <div>
+            <div class="label">Attention required</div>
+            <h2>Priority exceptions</h2>
+          </div>
+          <span id="alertCount" class="counter">0</span>
+        </div>
+        <div id="alerts"></div>
+      </article>
+    </section>
+
+    <section class="fourgrid">
+      <article class="card pad">
+        <div class="label">Workforce</div>
+        <h2>Current staffing mix</h2>
+        <div id="workforce"></div>
+      </article>
+
+      <article class="card pad">
+        <div class="label">Teams</div>
+        <h2>Live team health</h2>
+        <div id="teams"></div>
+      </article>
+
+      <article class="card pad">
+        <div class="label">Queues</div>
+        <h2>Current active workload</h2>
+        <div id="queues"></div>
+      </article>
+
+      <article class="card pad">
+        <div class="label">Operational watch</div>
+        <h2>Longest current states</h2>
+        <div id="longest"></div>
+      </article>
+    </section>
+
+    <section class="card detail">
+      <div class="detailhead">
+        <div>
+          <div class="label">Live operations</div>
+          <h2>Agent detail</h2>
+        </div>
+
+        <div class="controls">
+          <button id="syncStates" type="button">Sync states</button>
+
+          <input
+            id="search"
+            placeholder="Search agent, team, queue or reason"
+          >
+
+          <select id="state">
+            <option value="">All states</option>
+          </select>
+
+          <select id="seconds">
+            <option value="3">3 sec</option>
+            <option value="5" selected>5 sec</option>
+            <option value="10">10 sec</option>
+            <option value="30">30 sec</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="syncStatus" class="syncstatus"></div>
+
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Agent</th>
+              <th>State</th>
+              <th>Reason / Wrap-up</th>
+              <th>Team</th>
+              <th>Queue</th>
+              <th>Time in state</th>
+              <th>Current interaction</th>
+            </tr>
+          </thead>
+          <tbody id="rows">
+            <tr>
+              <td colspan="7" class="empty">Loading live agents…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      Webex webhook → Render FastAPI → PostgreSQL → GitHub Pages
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
