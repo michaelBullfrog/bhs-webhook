@@ -378,16 +378,11 @@ def save_webhook_event(
                     event_type,
                     org_id,
                     subscription_source,
-                    e.agent_id,
-                    e.agent_ci_user_id,
-                    user_lookup.display_name AS agent_name,
-                    user_lookup.email AS agent_email,
-                    e.task_id,
-                    e.queue_id,
-                    queue_lookup.queue_name,
-                    e.team_id,
-                    team_lookup.team_name,
-                    team_lookup.site_name,
+                    agent_id,
+                    agent_ci_user_id,
+                    task_id,
+                    queue_id,
+                    team_id,
                     channel_id,
                     channel_type,
                     current_state,
@@ -519,7 +514,6 @@ def save_webhook_event(
                 )
 
     return inserted
-
 
 
 def upsert_contact_center_users(users: list[dict[str, Any]]) -> int:
@@ -746,6 +740,7 @@ def get_lookup_counts() -> dict[str, int]:
             row = cursor.fetchone()
             return dict(row)
 
+
 def list_auxiliary_codes(
     code_type: str | None = None,
 ) -> list[dict[str, Any]]:
@@ -780,31 +775,39 @@ def list_recent_events(limit: int = 100) -> list[dict[str, Any]]:
             cursor.execute(
                 """
                 SELECT
-                    event_id,
-                    event_type,
-                    agent_id,
-                    agent_ci_user_id,
-                    task_id,
-                    queue_id,
-                    team_id,
-                    channel_id,
-                    channel_type,
-                    current_state,
-                    idle_code_id,
+                    e.event_id,
+                    e.event_type,
+                    e.agent_id,
+                    e.agent_ci_user_id,
+                    user_lookup.display_name AS agent_name,
+                    user_lookup.email AS agent_email,
+                    e.task_id,
+                    e.queue_id,
+                    queue_lookup.queue_name,
                     COALESCE(
-                        idle_code_name,
+                        e.team_id,
+                        user_lookup.primary_team_id
+                    ) AS team_id,
+                    team_lookup.team_name,
+                    team_lookup.site_name,
+                    e.channel_id,
+                    e.channel_type,
+                    e.current_state,
+                    e.idle_code_id,
+                    COALESCE(
+                        e.idle_code_name,
                         idle_lookup.code_name
                     ) AS idle_code_name,
-                    wrapup_code_id,
+                    e.wrapup_code_id,
                     COALESCE(
-                        wrapup_code_name,
+                        e.wrapup_code_name,
                         wrapup_lookup.code_name
                     ) AS wrapup_code_name,
-                    origin_value AS origin,
-                    destination_value AS destination,
-                    occurred_at,
-                    received_at,
-                    raw_payload
+                    e.origin_value AS origin,
+                    e.destination_value AS destination,
+                    e.occurred_at,
+                    e.received_at,
+                    e.raw_payload
                 FROM agent_state_events e
                 LEFT JOIN LATERAL (
                     SELECT
@@ -822,14 +825,17 @@ def list_recent_events(limit: int = 100) -> list[dict[str, Any]]:
                     LIMIT 1
                 ) user_lookup ON TRUE
                 LEFT JOIN contact_center_teams team_lookup
-                    ON team_lookup.team_id = e.team_id
+                    ON team_lookup.team_id = COALESCE(
+                        e.team_id,
+                        user_lookup.primary_team_id
+                    )
                 LEFT JOIN contact_center_queues queue_lookup
                     ON queue_lookup.queue_id = e.queue_id
                 LEFT JOIN auxiliary_codes idle_lookup
                     ON idle_lookup.auxiliary_code_id = e.idle_code_id
                 LEFT JOIN auxiliary_codes wrapup_lookup
                     ON wrapup_lookup.auxiliary_code_id = e.wrapup_code_id
-                ORDER BY received_at DESC
+                ORDER BY e.received_at DESC
                 LIMIT %s
                 """,
                 (safe_limit,),
