@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .database import initialize_database
@@ -21,9 +22,19 @@ app = FastAPI(
     title=settings.app_name,
     description=(
         "Receives Webex Contact Center events and stores "
-        "agent metrics in PostgreSQL for Power BI."
+        "agent metrics in PostgreSQL for real-time reporting."
     ),
-    version="0.3.0",
+    version="0.4.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://michaelbullfrog.github.io",
+    ],
+    allow_credentials=False,
+    allow_methods=["GET"],
+    allow_headers=["*"],
 )
 
 app.include_router(webhook_router)
